@@ -115,7 +115,7 @@ public class JmsServerSession implements ServerSession, MessageListener, Work, W
         endpoint = endpointFactory.createEndpoint(xaResource);
 
         // Set the message listener
-        session.setMessageListener(this);
+        //session.setMessageListener(this);
     }
 
     /**
@@ -156,13 +156,13 @@ public class JmsServerSession implements ServerSession, MessageListener, Work, W
                 tm.setTransactionTimeout(timeout);
             }
 
-            endpoint.beforeDelivery(JmsActivation.ONMESSAGE);
+            //endpoint.beforeDelivery(JmsActivation.ONMESSAGE);
 
             try {
                 MessageListener listener = (MessageListener) endpoint;
                 listener.onMessage(message);
             } finally {
-                endpoint.afterDelivery();
+                //endpoint.afterDelivery();
             }
         } catch (Throwable t) {
             log.error("Unexpected error delivering message " + message, t);

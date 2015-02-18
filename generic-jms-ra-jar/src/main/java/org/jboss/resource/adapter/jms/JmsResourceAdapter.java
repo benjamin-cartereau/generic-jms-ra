@@ -21,9 +21,10 @@
  */
 package org.jboss.resource.adapter.jms;
 
-import org.jboss.logging.Logger;
-import org.jboss.resource.adapter.jms.inflow.JmsActivation;
-import org.jboss.resource.adapter.jms.inflow.JmsActivationSpec;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.resource.ResourceException;
 import javax.resource.spi.ActivationSpec;
@@ -33,9 +34,10 @@ import javax.resource.spi.ResourceAdapterInternalException;
 import javax.resource.spi.endpoint.MessageEndpointFactory;
 import javax.resource.spi.work.WorkManager;
 import javax.transaction.xa.XAResource;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+
+import org.jboss.logging.Logger;
+import org.jboss.resource.adapter.jms.inflow.JmsActivation;
+import org.jboss.resource.adapter.jms.inflow.JmsActivationSpec;
 
 /**
  * A generic resource adapter for any JMS server.
@@ -56,7 +58,7 @@ public class JmsResourceAdapter implements ResourceAdapter {
     /**
      * The activations by activation spec
      */
-    private ConcurrentHashMap activations = new ConcurrentHashMap();
+    private ConcurrentHashMap<ActivationSpec, JmsActivation> activations = new ConcurrentHashMap<ActivationSpec, JmsActivation>();
 
     /**
      * Get the work manager
@@ -89,10 +91,10 @@ public class JmsResourceAdapter implements ResourceAdapter {
     }
 
     public void stop() {
-        for (Iterator i = activations.entrySet().iterator(); i.hasNext(); ) {
-            Map.Entry entry = (Map.Entry) i.next();
+    	for (Iterator<Entry<ActivationSpec, JmsActivation>> i = activations.entrySet().iterator(); i.hasNext(); ) {
+            Map.Entry<ActivationSpec, JmsActivation> entry = i.next();
             try {
-                JmsActivation activation = (JmsActivation) entry.getValue();
+                JmsActivation activation = entry.getValue();
                 if (activation != null) {
                     activation.stop();
                 }

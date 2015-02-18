@@ -62,8 +62,8 @@ public class JmsConnectionMetaData implements ConnectionMetaData {
         return 0;
     }
 
-    public Enumeration getJMSXPropertyNames() {
-        Vector vector = new Vector();
+    public Enumeration<String> getJMSXPropertyNames() {
+        Vector<String> vector = new Vector<String>();
         vector.add("JMSXGroupID");
         vector.add("JMSXGroupSeq");
         vector.add("JMSXDeliveryCount");

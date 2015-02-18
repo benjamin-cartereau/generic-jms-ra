@@ -210,6 +210,22 @@ public class JmsManagedConnectionFactory implements ManagedConnectionFactory {
         return mcfProperties.getConnectionFactory();
     }
 
+    public void setQueueConnectionFactory(String queueConnectionFactory) {
+    	mcfProperties.setQueueConnectionFactory(queueConnectionFactory);
+    }
+    		
+    public String getQueueConnectionFactory() {
+    	return mcfProperties.getQueueConnectionFactory();
+    }
+    
+    public void setTopicConnectionFactory(String topicConnectionFactory) {
+    	mcfProperties.setTopicConnectionFactory(topicConnectionFactory);
+    }
+    
+    public String getTopicConnectionFactory() {
+    	return mcfProperties.getTopicConnectionFactory();
+    }
+
     /**
      * Set userName, null by default.
      */

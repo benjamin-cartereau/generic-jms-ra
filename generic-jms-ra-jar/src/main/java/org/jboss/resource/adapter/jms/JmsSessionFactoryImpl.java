@@ -90,17 +90,17 @@ public class JmsSessionFactoryImpl implements JmsSessionFactory, Referenceable {
     /**
      * The sessions
      */
-    private HashSet sessions = new HashSet();
+    private HashSet<JmsSession> sessions = new HashSet<JmsSession>();
 
     /**
      * The temporary queues
      */
-    private HashSet tempQueues = new HashSet();
+    private HashSet<TemporaryQueue> tempQueues = new HashSet<TemporaryQueue>();
 
     /**
      * The temporary topics
      */
-    private HashSet tempTopics = new HashSet();
+    private HashSet<TemporaryTopic> tempTopics = new HashSet<TemporaryTopic>();
 
     public JmsSessionFactoryImpl(final ManagedConnectionFactory mcf,
                                  final ConnectionManager cm,
@@ -231,8 +231,8 @@ public class JmsSessionFactoryImpl implements JmsSessionFactory, Referenceable {
             if (started)
                 return;
             started = true;
-            for (Iterator i = sessions.iterator(); i.hasNext(); ) {
-                JmsSession session = (JmsSession) i.next();
+            for (Iterator<JmsSession> i = sessions.iterator(); i.hasNext(); ) {
+                JmsSession session = i.next();
                 session.start();
             }
         }
@@ -248,8 +248,8 @@ public class JmsSessionFactoryImpl implements JmsSessionFactory, Referenceable {
             if (started == false)
                 return;
             started = true;
-            for (Iterator i = sessions.iterator(); i.hasNext(); ) {
-                JmsSession session = (JmsSession) i.next();
+            for (Iterator<JmsSession> i = sessions.iterator(); i.hasNext(); ) {
+                JmsSession session = i.next();
                 session.stop();
             }
         }
@@ -264,8 +264,8 @@ public class JmsSessionFactoryImpl implements JmsSessionFactory, Referenceable {
             log.trace("close() " + this);
 
         synchronized (sessions) {
-            for (Iterator i = sessions.iterator(); i.hasNext(); ) {
-                JmsSession session = (JmsSession) i.next();
+            for (Iterator<JmsSession> i = sessions.iterator(); i.hasNext(); ) {
+                JmsSession session = i.next();
                 try {
                     session.closeSession();
                 } catch (Throwable t) {
@@ -277,8 +277,8 @@ public class JmsSessionFactoryImpl implements JmsSessionFactory, Referenceable {
 
         if (mcf.isDeleteTemporaryDestinations()) {
             synchronized (tempQueues) {
-                for (Iterator i = tempQueues.iterator(); i.hasNext(); ) {
-                    TemporaryQueue temp = (TemporaryQueue) i.next();
+                for (Iterator<TemporaryQueue> i = tempQueues.iterator(); i.hasNext(); ) {
+                    TemporaryQueue temp = i.next();
                     try {
                         if (trace)
                             log.trace("Closing temporary queue " + temp + " for " + this);
@@ -291,8 +291,8 @@ public class JmsSessionFactoryImpl implements JmsSessionFactory, Referenceable {
             }
 
             synchronized (tempTopics) {
-                for (Iterator i = tempTopics.iterator(); i.hasNext(); ) {
-                    TemporaryTopic temp = (TemporaryTopic) i.next();
+                for (Iterator<TemporaryTopic> i = tempTopics.iterator(); i.hasNext(); ) {
+                    TemporaryTopic temp = i.next();
                     try {
                         if (trace)
                             log.trace("Closing temporary topic " + temp + " for " + this);
@@ -347,9 +347,11 @@ public class JmsSessionFactoryImpl implements JmsSessionFactory, Referenceable {
                 if (mcf.isStrict() && sessions.isEmpty() == false)
                     throw new IllegalStateException("Only allowed one session per connection. See the J2EE spec, e.g. J2EE1.4 Section 6.6");
 
-                if (transacted) {
-                    acknowledgeMode = Session.SESSION_TRANSACTED;
+                if (!transacted) {
+                	throw new IllegalArgumentException("Only transacted sessions are supported.");
                 }
+                
+                acknowledgeMode = Session.SESSION_TRANSACTED;
 
                 JmsConnectionRequestInfo info = new JmsConnectionRequestInfo(transacted, acknowledgeMode, sessionType);
                 info.setUserName(userName);

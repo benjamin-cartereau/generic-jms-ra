@@ -23,13 +23,10 @@ package org.jboss.resource.adapter.jms.inflow;
 
 import java.util.ArrayList;
 
-import javax.jms.Connection;
 import javax.jms.ConnectionConsumer;
 import javax.jms.JMSException;
-import javax.jms.Queue;
 import javax.jms.ServerSession;
 import javax.jms.ServerSessionPool;
-import javax.jms.Topic;
 
 import org.jboss.logging.Logger;
 
@@ -57,7 +54,7 @@ public class JmsServerSessionPool implements ServerSessionPool {
     /**
      * The server sessions
      */
-    ArrayList serverSessions = new ArrayList();
+    ArrayList<JmsServerSession> serverSessions = new ArrayList<JmsServerSession>();
 
     /**
      * Whether the pool is stopped
@@ -163,9 +160,10 @@ public class JmsServerSessionPool implements ServerSessionPool {
      *
      * @throws Exception for any error
      */
-    protected void setupSessions() throws Exception {
+    @SuppressWarnings("unchecked")
+	protected void setupSessions() throws Exception {
         JmsActivationSpec spec = activation.getActivationSpec();
-        ArrayList clonedSessions = null;
+        ArrayList<JmsServerSession> clonedSessions = null;
 
         // Create the sessions
         synchronized (serverSessions) {
@@ -174,7 +172,7 @@ public class JmsServerSessionPool implements ServerSessionPool {
                 serverSessions.add(session);
             }
             sessionCount = serverSessions.size();
-            clonedSessions = (ArrayList) serverSessions.clone();
+            clonedSessions = (ArrayList<JmsServerSession>) serverSessions.clone();
         }
 
         // Start the sessions
@@ -195,7 +193,7 @@ public class JmsServerSessionPool implements ServerSessionPool {
 
             // Stop inactive sessions
             for (int i = 0; i < serverSessions.size(); ++i) {
-                JmsServerSession session = (JmsServerSession) serverSessions.get(i);
+                JmsServerSession session = serverSessions.get(i);
                 session.teardown();
                 --sessionCount;
             }
@@ -239,23 +237,7 @@ public class JmsServerSessionPool implements ServerSessionPool {
      * @throws Exception for any error
      */
     protected void setupConsumer() throws Exception {
-        Connection connection = activation.getConnection();
-        JmsActivationSpec spec = activation.getActivationSpec();
-        String selector = spec.getMessageSelector();
-        int maxMessages = spec.getMaxMessagesInt();
-        if (activation.isTopic()) {
-            Topic topic = (Topic) activation.getDestination();
-            String subscriptionName = spec.getSubscriptionName();
-            if (spec.isDurable()) {
-                consumer = connection.createDurableConnectionConsumer(topic, subscriptionName, selector, this, maxMessages);
-            } else {
-                consumer = connection.createConnectionConsumer(topic, selector, this, maxMessages);
-            }
-        } else {
-            Queue queue = (Queue) activation.getDestination();
-            consumer = connection.createConnectionConsumer(queue, selector, this, maxMessages);
-        }
-        log.debug("Created consumer " + consumer);
+    	consumer = new DelegatedConnectionConsumer(this, activation.getDestination());
 
         if (consumer == null) {
             throw new JMSException("Consumer is null");

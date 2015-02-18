@@ -22,7 +22,6 @@
 package org.jboss.resource.adapter.jms;
 
 import java.io.Serializable;
-import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Iterator;
 
@@ -31,10 +30,10 @@ import javax.jms.Destination;
 import javax.jms.IllegalStateException;
 import javax.jms.InvalidDestinationException;
 import javax.jms.JMSException;
-import javax.jms.MessageListener;
 import javax.jms.MapMessage;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
@@ -85,12 +84,12 @@ public class JmsSession implements Session, QueueSession, TopicSession {
     /**
      * The message consumers
      */
-    private HashSet consumers = new HashSet();
+    private HashSet<MessageConsumer> consumers = new HashSet<MessageConsumer>();
 
     /**
      * The message producers
      */
-    private HashSet producers = new HashSet();
+    private HashSet<MessageProducer> producers = new HashSet<MessageProducer>();
 
     /**
      * Whether trace is enabled
@@ -673,7 +672,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
             }
 
             synchronized (consumers) {
-                for (Iterator i = consumers.iterator(); i.hasNext(); ) {
+                for (Iterator<MessageConsumer> i = consumers.iterator(); i.hasNext(); ) {
                     JmsMessageConsumer consumer = (JmsMessageConsumer) i.next();
                     try {
                         consumer.closeConsumer();
@@ -685,7 +684,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
             }
 
             synchronized (producers) {
-                for (Iterator i = producers.iterator(); i.hasNext(); ) {
+                for (Iterator<MessageProducer> i = producers.iterator(); i.hasNext(); ) {
                     JmsMessageProducer producer = (JmsMessageProducer) i.next();
                     try {
                         producer.closeProducer();
