@@ -63,6 +63,11 @@ public class JmsActivation implements ExceptionListener {
     // this should work in AS7, not sure about any other container
     private static final String JNDI_NAME = "java:jboss/TransactionManager";
 
+    private static final String JNDI_PARAMETERS_SEPARATOR = ";";
+    private static final String KEY_VALUE_SEPARATOR = "=";
+    private static final String NULL_STRING = "null";
+    private static final char CLASS_NAME_IDENTITY_SEPARATOR = '@';
+    
     /**
      * The onMessage method
      */
@@ -127,7 +132,9 @@ public class JmsActivation implements ExceptionListener {
     static {
         try {
             ONMESSAGE = MessageListener.class.getMethod("onMessage", new Class[]{Message.class});
-        } catch (Exception e) {
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        } catch (SecurityException e) {
             throw new RuntimeException(e);
         }
     }
@@ -252,11 +259,12 @@ public class JmsActivation implements ExceptionListener {
                     log.debug("Interrupted trying to reconnect " + spec, e);
                     break;
                 }
-
-                log.info("Attempting to reconnect " + spec);
+                if (log.isInfoEnabled())
+                    log.info("Attempting to reconnect " + spec);
                 try {
                     setupActivation();
-                    log.info("Reconnected with messaging provider.");
+                    if (log.isInfoEnabled())
+                        log.info("Reconnected with messaging provider.");
                     break;
                 } catch (Throwable t) {
                     log.error("Unable to reconnect " + spec, t);
@@ -269,12 +277,14 @@ public class JmsActivation implements ExceptionListener {
         }
     }
 
+    @Override
     public void onException(JMSException exception) {
         handleFailure(exception);
     }
 
+    @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(defaultToString(this)).append('(');
         buffer.append("spec=").append(defaultToString(spec));
         buffer.append(" endpointFactory=").append(defaultToString(endpointFactory));
@@ -305,9 +315,11 @@ public class JmsActivation implements ExceptionListener {
             // to ensure that the underlying initial context factory can be instantiated
             SecurityActions.setThreadContextClassLoader(JmsActivation.class.getClassLoader());
 
-            log.debug("Setting up " + spec);
+            if (log.isDebugEnabled())
+                log.debug("Setting up " + spec);
             Context ctx = convertStringToContext(spec.getJndiParameters());
-            log.debug("Using context " + ctx.getEnvironment() + " for " + spec);
+            if (log.isDebugEnabled())
+                log.debug("Using context " + ctx.getEnvironment() + " for " + spec);
             try {
                 setupDestination(ctx);
                 setupConnection(ctx);
@@ -315,8 +327,8 @@ public class JmsActivation implements ExceptionListener {
                 ctx.close();
             }
             setupSessionPool();
-
-            log.debug("Setup complete " + this);
+            if (log.isDebugEnabled())
+                log.debug("Setup complete " + this);
         } finally {
             SecurityActions.setThreadContextClassLoader(oldTCCL);
         }
@@ -336,9 +348,9 @@ public class JmsActivation implements ExceptionListener {
     static Properties convertStringToProperties(String jndiParameters) {
         Properties properties = new Properties();
         if (jndiParameters != null) {
-            String[] elements = jndiParameters.split(";");
+            String[] elements = jndiParameters.split(JNDI_PARAMETERS_SEPARATOR);
             for (String element : elements) {
-                String[] nameValue = element.split("=", 2);
+                String[] nameValue = element.split(KEY_VALUE_SEPARATOR, 2);
                 if (nameValue.length == 2) {
                     properties.setProperty(nameValue[0], nameValue[1]);
                 }
@@ -351,13 +363,15 @@ public class JmsActivation implements ExceptionListener {
      * Teardown the activation
      */
     protected void teardown() {
-        log.debug("Tearing down " + spec);
+        if (log.isDebugEnabled())
+            log.debug("Tearing down " + spec);
 
         teardownSessionPool();
         teardownConnection();
         teardownDestination();
-
-        log.debug("Tearing down complete " + this);
+        
+        if (log.isDebugEnabled())
+            log.debug("Tearing down complete " + this);
     }
 
     /**
@@ -370,7 +384,8 @@ public class JmsActivation implements ExceptionListener {
         String destinationName = spec.getDestination();
 
         String destinationTypeString = spec.getDestinationType();
-        log.debug("Destination type defined as " + destinationTypeString);
+        if (log.isDebugEnabled())
+            log.debug("Destination type defined as " + destinationTypeString);
 
         Class<?> destinationType;
         if (Topic.class.getName().equals(destinationTypeString)) {
@@ -380,14 +395,16 @@ public class JmsActivation implements ExceptionListener {
         } else {
             destinationType = Destination.class;
         }
-
-        log.debug("Retrieving destination " + destinationName + " of type " + destinationType.getName());
+        
+        if (log.isDebugEnabled())
+            log.debug("Retrieving destination " + destinationName + " of type " + destinationType.getName());
         destination = (Destination) lookup(ctx, destinationName, destinationType);
         if (destination instanceof Topic) {
             isTopic = true;
         }
 
-        log.debug("Got destination " + destination + " from " + destinationName);
+        if (log.isDebugEnabled())
+            log.debug("Got destination " + destination + " from " + destinationName);
     }
 
     /**
@@ -404,7 +421,8 @@ public class JmsActivation implements ExceptionListener {
      * @throws Exception for any error
      */
     private void setupConnection(Context ctx) throws Exception {
-        log.debug("setup connection " + this);
+        if (log.isDebugEnabled())
+            log.debug("setup connection " + this);
 
         String user = spec.getUser();
         String pass = spec.getPassword();
@@ -412,8 +430,9 @@ public class JmsActivation implements ExceptionListener {
         String connectionFactory = spec.getConnectionFactory();
 
         connection = setupConnection(ctx, user, pass, clientID, connectionFactory);
-
-        log.debug("established connection " + this);
+        
+        if (log.isDebugEnabled())
+            log.debug("established connection " + this);
     }
 
     /**
@@ -428,10 +447,13 @@ public class JmsActivation implements ExceptionListener {
      * @throws Exception for any error
      */
     private Connection setupConnection(Context ctx, String user, String pass, String clientID, String connectionFactory) throws Exception {
-        log.debug("Attempting to lookup connection factory " + connectionFactory);
+        if (log.isDebugEnabled())
+            log.debug("Attempting to lookup connection factory " + connectionFactory);
         Object preliminaryObject = lookup(ctx, connectionFactory, Object.class);
-        log.debug("Got connection factory " + preliminaryObject + " from " + connectionFactory);
-        log.debug("Attempting to create connection with user " + user);
+        if (log.isDebugEnabled()) {
+            log.debug("Got connection factory " + preliminaryObject + " from " + connectionFactory);
+            log.debug("Attempting to create connection with user " + user);
+        }
         Connection result;
         if (isDeliveryTransacted) {
             XAConnectionFactory xagcf = (XAConnectionFactory) preliminaryObject;
@@ -462,7 +484,8 @@ public class JmsActivation implements ExceptionListener {
                 result.setClientID(clientID);
             }
             result.setExceptionListener(this);
-            log.debug("Using generic connection " + result);
+            if (log.isDebugEnabled())
+                log.debug("Using generic connection " + result);
             return result;
         } catch (Throwable t) {
             try {
@@ -483,7 +506,8 @@ public class JmsActivation implements ExceptionListener {
     protected void teardownConnection() {
         try {
             if (connection != null) {
-                log.debug("Closing the " + connection);
+                if (log.isDebugEnabled())
+                    log.debug("Closing the " + connection);
                 connection.close();
             }
         } catch (Throwable t) {
@@ -499,15 +523,20 @@ public class JmsActivation implements ExceptionListener {
      */
     protected void setupSessionPool() throws Exception {
         pool = new JmsServerSessionPool(this);
-        log.debug("Created session pool " + pool);
+        if (log.isDebugEnabled()) {
+            log.debug("Created session pool " + pool);
 
-        log.debug("Starting session pool " + pool);
+            log.debug("Starting session pool " + pool);
+        }
         pool.start();
-        log.debug("Started session pool " + pool);
+        if (log.isDebugEnabled()) {
+            log.debug("Started session pool " + pool);
 
-        log.debug("Starting delivery " + connection);
+            log.debug("Starting delivery " + connection);
+        }
         connection.start();
-        log.debug("Started delivery " + connection);
+        if (log.isDebugEnabled())
+            log.debug("Started delivery " + connection);
     }
 
     /**
@@ -516,7 +545,8 @@ public class JmsActivation implements ExceptionListener {
     protected void teardownSessionPool() {
         try {
             if (connection != null) {
-                log.debug("Stopping delivery " + connection);
+                if (log.isDebugEnabled())
+                    log.debug("Stopping delivery " + connection);
                 connection.stop();
             }
         } catch (Throwable t) {
@@ -525,7 +555,8 @@ public class JmsActivation implements ExceptionListener {
 
         try {
             if (pool != null) {
-                log.debug("Stopping the session pool " + pool);
+                if (log.isDebugEnabled())
+                    log.debug("Stopping the session pool " + pool);
                 pool.stop();
             }
         } catch (Throwable t) {
@@ -538,6 +569,7 @@ public class JmsActivation implements ExceptionListener {
      * Handles the setup
      */
     private class SetupActivation implements Work {
+        @Override
         public void run() {
             try {
                 setupActivation();
@@ -546,15 +578,16 @@ public class JmsActivation implements ExceptionListener {
             }
         }
 
+        @Override
         public void release() {
         }
     }
 
     public static final String defaultToString(Object object) {
         if (object == null) {
-            return "null";
+            return NULL_STRING;
         } else {
-            return object.getClass().getName() + '@' + Integer.toHexString(System.identityHashCode(object));
+            return object.getClass().getName() + CLASS_NAME_IDENTITY_SEPARATOR + Integer.toHexString(System.identityHashCode(object));
         }
     }
 
@@ -562,7 +595,7 @@ public class JmsActivation implements ExceptionListener {
         Object result = context.lookup(name);
         Class<?> objectClass = result.getClass();
         if (clazz.isAssignableFrom(objectClass) == false) {
-            StringBuffer buffer = new StringBuffer(100);
+            StringBuilder buffer = new StringBuilder(100);
             buffer.append("Object at '").append(name);
             buffer.append("' in context ").append(context.getEnvironment());
             buffer.append(" is not an instance of ");
@@ -580,7 +613,7 @@ public class JmsActivation implements ExceptionListener {
      * @param buffer the buffer to append to
      * @param clazz  the class to describe
      */
-    private static void appendClassInfo(StringBuffer buffer, Class<?> clazz) {
+    private static void appendClassInfo(StringBuilder buffer, Class<?> clazz) {
         buffer.append("[class=").append(clazz.getName());
         buffer.append(" classloader=").append(clazz.getClassLoader());
         buffer.append(" interfaces={");

@@ -50,9 +50,9 @@ public class JmsConnectionFactoryImpl implements JmsConnectionFactory, Reference
 
     private static final Logger log = Logger.getLogger(JmsConnectionFactoryImpl.class);
 
-    private ManagedConnectionFactory mcf;
+    private final ManagedConnectionFactory mcf;
 
-    private ConnectionManager cm;
+    private final ConnectionManager cm;
 
     private Reference reference;
 
@@ -75,6 +75,7 @@ public class JmsConnectionFactoryImpl implements JmsConnectionFactory, Reference
         }
     }
 
+    @Override
     public void setReference(final Reference reference) {
         this.reference = reference;
 
@@ -83,10 +84,12 @@ public class JmsConnectionFactoryImpl implements JmsConnectionFactory, Reference
         }
     }
 
+    @Override
     public Reference getReference() {
         return reference;
     }
 
+    @Override
     public QueueConnection createQueueConnection() throws JMSException {
         QueueConnection qc = new JmsSessionFactoryImpl(mcf, cm, QUEUE);
 
@@ -97,6 +100,7 @@ public class JmsConnectionFactoryImpl implements JmsConnectionFactory, Reference
         return qc;
     }
 
+    @Override
     public QueueConnection createQueueConnection(String userName, String password) throws JMSException {
         JmsSessionFactoryImpl s = new JmsSessionFactoryImpl(mcf, cm, QUEUE);
         s.setUserName(userName);
@@ -111,6 +115,7 @@ public class JmsConnectionFactoryImpl implements JmsConnectionFactory, Reference
 
     // --- TopicConnectionFactory
 
+    @Override
     public TopicConnection createTopicConnection() throws JMSException {
         TopicConnection tc = new JmsSessionFactoryImpl(mcf, cm, TOPIC);
 
@@ -121,6 +126,7 @@ public class JmsConnectionFactoryImpl implements JmsConnectionFactory, Reference
         return tc;
     }
 
+    @Override
     public TopicConnection createTopicConnection(String userName, String password) throws JMSException {
         JmsSessionFactoryImpl s = new JmsSessionFactoryImpl(mcf, cm, TOPIC);
         s.setUserName(userName);
@@ -135,6 +141,7 @@ public class JmsConnectionFactoryImpl implements JmsConnectionFactory, Reference
 
     // --- JMS 1.1
 
+    @Override
     public Connection createConnection() throws JMSException {
         Connection c = new JmsSessionFactoryImpl(mcf, cm, AGNOSTIC);
 
@@ -145,6 +152,7 @@ public class JmsConnectionFactoryImpl implements JmsConnectionFactory, Reference
         return c;
     }
 
+    @Override
     public Connection createConnection(String userName, String password) throws JMSException {
         JmsSessionFactoryImpl s = new JmsSessionFactoryImpl(mcf, cm, AGNOSTIC);
         s.setUserName(userName);

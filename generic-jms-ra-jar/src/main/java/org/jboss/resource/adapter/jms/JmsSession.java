@@ -155,6 +155,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
 
     // ---- Session API
 
+    @Override
     public BytesMessage createBytesMessage() throws JMSException {
         Session session = getSession();
         if (trace)
@@ -162,6 +163,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         return session.createBytesMessage();
     }
 
+    @Override
     public MapMessage createMapMessage() throws JMSException {
         Session session = getSession();
         if (trace)
@@ -169,6 +171,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         return session.createMapMessage();
     }
 
+    @Override
     public Message createMessage() throws JMSException {
         Session session = getSession();
         if (trace)
@@ -176,6 +179,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         return session.createMessage();
     }
 
+    @Override
     public ObjectMessage createObjectMessage() throws JMSException {
         Session session = getSession();
         if (trace)
@@ -183,6 +187,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         return session.createObjectMessage();
     }
 
+    @Override
     public ObjectMessage createObjectMessage(Serializable object) throws JMSException {
         Session session = getSession();
         if (trace)
@@ -190,6 +195,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         return session.createObjectMessage(object);
     }
 
+    @Override
     public StreamMessage createStreamMessage() throws JMSException {
         Session session = getSession();
         if (trace)
@@ -197,6 +203,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         return session.createStreamMessage();
     }
 
+    @Override
     public TextMessage createTextMessage() throws JMSException {
         Session session = getSession();
         if (trace)
@@ -204,6 +211,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         return session.createTextMessage();
     }
 
+    @Override
     public TextMessage createTextMessage(String string) throws JMSException {
         Session session = getSession();
         if (trace)
@@ -212,6 +220,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
     }
 
 
+    @Override
     public boolean getTransacted() throws JMSException {
         getSession(); // check closed
         return info.isTransacted();
@@ -222,6 +231,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
      *
      * @throws IllegalStateException Method not allowed.
      */
+    @Override
     public MessageListener getMessageListener() throws JMSException {
         throw new IllegalStateException("Method not allowed");
     }
@@ -231,6 +241,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
      *
      * @throws IllegalStateException Method not allowed.
      */
+    @Override
     public void setMessageListener(MessageListener listener) throws JMSException {
         throw new IllegalStateException("Method not allowed");
     }
@@ -240,6 +251,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
      *
      * @throws Error Method not allowed.
      */
+    @Override
     public void run() {
         // should this really throw an Error?
         throw new Error("Method not allowed");
@@ -251,12 +263,14 @@ public class JmsSession implements Session, QueueSession, TopicSession {
      *
      * @throws JMSException Failed to close session.
      */
+    @Override
     public void close() throws JMSException {
         sf.closeSession(this);
         closeSession();
     }
 
     // FIXME - is this really OK, probably not
+    @Override
     public void commit() throws JMSException {
         lock();
         try {
@@ -271,6 +285,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         }
     }
 
+    @Override
     public void rollback() throws JMSException {
         lock();
         try {
@@ -285,6 +300,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         }
     }
 
+    @Override
     public void recover() throws JMSException {
         lock();
         try {
@@ -301,6 +317,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
 
     // --- TopicSession API
 
+    @Override
     public Topic createTopic(String topicName) throws JMSException {
         if (info.getType() == JmsConnectionFactory.QUEUE) {
             throw new IllegalStateException("Cannot create topic for javax.jms.QueueSession");
@@ -315,6 +332,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         return result;
     }
 
+    @Override
     public TopicSubscriber createSubscriber(Topic topic) throws JMSException {
         lock();
         try {
@@ -332,6 +350,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         }
     }
 
+    @Override
     public TopicSubscriber createSubscriber(Topic topic, String messageSelector, boolean noLocal) throws JMSException {
         lock();
         try {
@@ -349,6 +368,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         }
     }
 
+    @Override
     public TopicSubscriber createDurableSubscriber(Topic topic, String name) throws JMSException {
         if (info.getType() == JmsConnectionFactory.QUEUE) {
             throw new IllegalStateException("Cannot create durable subscriber from javax.jms.QueueSession");
@@ -370,6 +390,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         }
     }
 
+    @Override
     public TopicSubscriber createDurableSubscriber(Topic topic, String name, String messageSelector, boolean noLocal)
             throws JMSException {
         lock();
@@ -388,6 +409,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         }
     }
 
+    @Override
     public TopicPublisher createPublisher(Topic topic) throws JMSException {
         lock();
         try {
@@ -405,6 +427,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         }
     }
 
+    @Override
     public TemporaryTopic createTemporaryTopic() throws JMSException {
         if (info.getType() == JmsConnectionFactory.QUEUE) {
             throw new IllegalStateException("Cannot create temporary topic for javax.jms.QueueSession");
@@ -425,6 +448,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         }
     }
 
+    @Override
     public void unsubscribe(String name) throws JMSException {
         if (info.getType() == JmsConnectionFactory.QUEUE) {
             throw new IllegalStateException("Cannot unsubscribe for javax.jms.QueueSession");
@@ -443,6 +467,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
 
     //--- QueueSession API
 
+    @Override
     public QueueBrowser createBrowser(Queue queue) throws JMSException {
 
         if (info.getType() == JmsConnectionFactory.TOPIC) {
@@ -459,6 +484,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         return result;
     }
 
+    @Override
     public QueueBrowser createBrowser(Queue queue, String messageSelector) throws JMSException {
         Session session = getSession();
         if (trace)
@@ -469,6 +495,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         return result;
     }
 
+    @Override
     public Queue createQueue(String queueName) throws JMSException {
         if (info.getType() == JmsConnectionFactory.TOPIC) {
             throw new IllegalStateException("Cannot create browser or javax.jms.TopicSession");
@@ -484,6 +511,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         return result;
     }
 
+    @Override
     public QueueReceiver createReceiver(Queue queue) throws JMSException {
         lock();
         try {
@@ -501,6 +529,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         }
     }
 
+    @Override
     public QueueReceiver createReceiver(Queue queue, String messageSelector) throws JMSException {
         lock();
         try {
@@ -518,6 +547,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         }
     }
 
+    @Override
     public QueueSender createSender(Queue queue) throws JMSException {
         lock();
         try {
@@ -535,6 +565,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         }
     }
 
+    @Override
     public TemporaryQueue createTemporaryQueue() throws JMSException {
         if (info.getType() == JmsConnectionFactory.TOPIC) {
             throw new IllegalStateException("Cannot create temporary queue for javax.jms.TopicSession");
@@ -558,6 +589,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
 
     // -- JMS 1.1
 
+    @Override
     public MessageConsumer createConsumer(Destination destination) throws JMSException {
         lock();
         try {
@@ -575,6 +607,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         }
     }
 
+    @Override
     public MessageConsumer createConsumer(Destination destination, String messageSelector) throws JMSException {
         lock();
         try {
@@ -592,6 +625,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         }
     }
 
+    @Override
     public MessageConsumer createConsumer(Destination destination, String messageSelector, boolean noLocal)
             throws JMSException {
         lock();
@@ -610,6 +644,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         }
     }
 
+    @Override
     public MessageProducer createProducer(Destination destination) throws JMSException {
         lock();
         try {
@@ -627,6 +662,7 @@ public class JmsSession implements Session, QueueSession, TopicSession {
         }
     }
 
+    @Override
     public int getAcknowledgeMode() throws JMSException {
         getSession(); // check closed
         return info.getAcknowledgeMode();

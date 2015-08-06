@@ -21,8 +21,10 @@
  */
 package org.jboss.resource.adapter.jms;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
-import java.util.Vector;
+import java.util.List;
 
 import javax.jms.ConnectionMetaData;
 
@@ -34,39 +36,47 @@ import javax.jms.ConnectionMetaData;
  * @author <a href="mailto:adrian@jboss.org">Adrian Brock</a>
  */
 public class JmsConnectionMetaData implements ConnectionMetaData {
+    @Override
     public String getJMSVersion() {
         return "1.1";
     }
 
+    @Override
     public int getJMSMajorVersion() {
         return 1;
     }
 
+    @Override
     public int getJMSMinorVersion() {
         return 1;
     }
 
+    @Override
     public String getJMSProviderName() {
         return "JBoss";
     }
 
+    @Override
     public String getProviderVersion() {
         return "5.0";
     }
 
+    @Override
     public int getProviderMajorVersion() {
         return 5;
     }
 
+    @Override
     public int getProviderMinorVersion() {
         return 0;
     }
-
+    
+    @Override
     public Enumeration<String> getJMSXPropertyNames() {
-        Vector<String> vector = new Vector<String>();
-        vector.add("JMSXGroupID");
-        vector.add("JMSXGroupSeq");
-        vector.add("JMSXDeliveryCount");
-        return vector.elements();
+        List<String> properties = new ArrayList<String>();
+        properties.add("JMSXGroupID");
+        properties.add("JMSXGroupSeq");
+        properties.add("JMSXDeliveryCount");
+        return Collections.enumeration(properties);
     }
 }

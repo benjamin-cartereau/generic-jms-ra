@@ -51,10 +51,12 @@ public class JmsQueueSender extends JmsMessageProducer implements QueueSender {
         super(producer, session);
     }
 
+    @Override
     public Queue getQueue() throws JMSException {
         return ((QueueSender) producer).getQueue();
     }
 
+    @Override
     public void send(Queue destination, Message message, int deliveryMode, int priority, long timeToLive) throws JMSException {
         session.lock();
         try {
@@ -68,6 +70,7 @@ public class JmsQueueSender extends JmsMessageProducer implements QueueSender {
         }
     }
 
+    @Override
     public void send(Queue destination, Message message) throws JMSException {
         session.lock();
         try {

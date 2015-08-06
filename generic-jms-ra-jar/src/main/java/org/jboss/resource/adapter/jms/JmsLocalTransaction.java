@@ -39,9 +39,11 @@ public class JmsLocalTransaction implements LocalTransaction {
         this.mc = mc;
     }
 
+    @Override
     public void begin() throws ResourceException {
     }
 
+    @Override
     public void commit() throws ResourceException {
         mc.lock();
         try {
@@ -54,6 +56,7 @@ public class JmsLocalTransaction implements LocalTransaction {
         }
     }
 
+    @Override
     public void rollback() throws ResourceException {
         mc.lock();
         try {

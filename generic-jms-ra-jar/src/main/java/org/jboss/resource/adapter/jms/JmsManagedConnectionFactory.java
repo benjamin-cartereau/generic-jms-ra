@@ -74,6 +74,7 @@ public class JmsManagedConnectionFactory implements ManagedConnectionFactory {
     /**
      * Create a "non managed" connection factory. No appserver involved
      */
+    @Override
     public Object createConnectionFactory() throws ResourceException {
         return createConnectionFactory(null);
     }
@@ -81,6 +82,7 @@ public class JmsManagedConnectionFactory implements ManagedConnectionFactory {
     /**
      * Create a ConnectionFactory with appserver hook
      */
+    @Override
     public Object createConnectionFactory(ConnectionManager cxManager) throws ResourceException {
         Object cf = new JmsConnectionFactoryImpl(this, cxManager);
 
@@ -94,6 +96,7 @@ public class JmsManagedConnectionFactory implements ManagedConnectionFactory {
     /**
      * Create a new connection to manage in pool
      */
+    @Override
     public ManagedConnection createManagedConnection(Subject subject, ConnectionRequestInfo info) throws ResourceException {
         boolean trace = log.isTraceEnabled();
 
@@ -117,6 +120,7 @@ public class JmsManagedConnectionFactory implements ManagedConnectionFactory {
     /**
      * Match a set of connections from the pool
      */
+    @Override
     public ManagedConnection matchManagedConnections(Set connectionSet, Subject subject, ConnectionRequestInfo info) throws ResourceException {
         boolean trace = log.isTraceEnabled();
 
@@ -168,9 +172,11 @@ public class JmsManagedConnectionFactory implements ManagedConnectionFactory {
         return null;
     }
 
+    @Override
     public void setLogWriter(PrintWriter out) throws ResourceException {
     }
 
+    @Override
     public PrintWriter getLogWriter() throws ResourceException {
         return null;
     }
@@ -178,6 +184,7 @@ public class JmsManagedConnectionFactory implements ManagedConnectionFactory {
     /**
      * Checks for equality ower the configured properties.
      */
+    @Override
     public boolean equals(Object obj) {
         if (obj == null)
             return false;
@@ -188,6 +195,7 @@ public class JmsManagedConnectionFactory implements ManagedConnectionFactory {
         }
     }
 
+    @Override
     public int hashCode() {
         return mcfProperties.hashCode();
     }

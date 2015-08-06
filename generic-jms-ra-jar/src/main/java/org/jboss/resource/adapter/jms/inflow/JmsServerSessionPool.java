@@ -22,11 +22,14 @@
 package org.jboss.resource.adapter.jms.inflow;
 
 import java.util.ArrayList;
-
+import java.util.List;
+import javax.jms.Connection;
 import javax.jms.ConnectionConsumer;
 import javax.jms.JMSException;
+import javax.jms.Queue;
 import javax.jms.ServerSession;
 import javax.jms.ServerSessionPool;
+import javax.jms.Topic;
 
 import org.jboss.logging.Logger;
 
@@ -54,7 +57,7 @@ public class JmsServerSessionPool implements ServerSessionPool {
     /**
      * The server sessions
      */
-    ArrayList<JmsServerSession> serverSessions = new ArrayList<JmsServerSession>();
+    final List<JmsServerSession> serverSessions = new ArrayList<JmsServerSession>();
 
     /**
      * Whether the pool is stopped
@@ -101,6 +104,7 @@ public class JmsServerSessionPool implements ServerSessionPool {
         teardownSessions();
     }
 
+    @Override
     public ServerSession getServerSession() throws JMSException {
         boolean trace = log.isTraceEnabled();
         if (trace) {
@@ -163,21 +167,21 @@ public class JmsServerSessionPool implements ServerSessionPool {
     @SuppressWarnings("unchecked")
 	protected void setupSessions() throws Exception {
         JmsActivationSpec spec = activation.getActivationSpec();
-        ArrayList<JmsServerSession> clonedSessions = null;
-
+        
         // Create the sessions
+        List<JmsServerSession> clonedSessions;
         synchronized (serverSessions) {
             for (int i = 0; i < spec.getMaxSession(); ++i) {
                 JmsServerSession session = new JmsServerSession(this);
                 serverSessions.add(session);
             }
             sessionCount = serverSessions.size();
-            clonedSessions = (ArrayList<JmsServerSession>) serverSessions.clone();
+            //clonedSessions = (ArrayList) serverSessions.clone();
+            clonedSessions = new ArrayList<JmsServerSession>(serverSessions);
         }
 
         // Start the sessions
-        for (int i = 0; i < clonedSessions.size(); ++i) {
-            JmsServerSession session = (JmsServerSession) clonedSessions.get(i);
+        for (JmsServerSession session : clonedSessions) {
             session.setup();
         }
     }
@@ -204,8 +208,9 @@ public class JmsServerSessionPool implements ServerSessionPool {
                 int attempts = 0;
                 int forceClearAttempts = activation.getActivationSpec().getForceClearAttempts();
                 long forceClearInterval = activation.getActivationSpec().getForceClearOnShutdownInterval();
-
-                log.trace(this + " force clear behavior in effect. Waiting for " + forceClearInterval + " milliseconds for " + forceClearAttempts + " attempts.");
+                
+                if (log.isTraceEnabled())
+                    log.trace(this + " force clear behavior in effect. Waiting for " + forceClearInterval + " milliseconds for " + forceClearAttempts + " attempts.");
 
                 while ((sessionCount > 0) && (attempts < forceClearAttempts)) {
                     try {
@@ -214,7 +219,8 @@ public class JmsServerSessionPool implements ServerSessionPool {
                         // Number of session didn't change
                         if (sessionCount == currentSessions) {
                             ++attempts;
-                            log.trace(this + " clear attempt failed " + attempts);
+                            if (log.isTraceEnabled())
+                                log.trace(this + " clear attempt failed " + attempts);
                         }
                     } catch (InterruptedException ignore) {
                     }
@@ -237,7 +243,24 @@ public class JmsServerSessionPool implements ServerSessionPool {
      * @throws Exception for any error
      */
     protected void setupConsumer() throws Exception {
-    	consumer = new DelegatedConnectionConsumer(this, activation.getDestination());
+        Connection connection = activation.getConnection();
+        JmsActivationSpec spec = activation.getActivationSpec();
+        String selector = spec.getMessageSelector();
+        int maxMessages = spec.getMaxMessagesInt();
+        if (activation.isTopic()) {
+            Topic topic = (Topic) activation.getDestination();
+            String subscriptionName = spec.getSubscriptionName();
+            if (spec.isDurable()) {
+                consumer = connection.createDurableConnectionConsumer(topic, subscriptionName, selector, this, maxMessages);
+            } else {
+                consumer = connection.createConnectionConsumer(topic, selector, this, maxMessages);
+            }
+        } else {
+            Queue queue = (Queue) activation.getDestination();
+            consumer = connection.createConnectionConsumer(queue, selector, this, maxMessages);
+        }
+        if (log.isDebugEnabled())
+            log.debug("Created consumer " + consumer);
 
         if (consumer == null) {
             throw new JMSException("Consumer is null");
@@ -250,7 +273,8 @@ public class JmsServerSessionPool implements ServerSessionPool {
     protected void teardownConsumer() {
         try {
             if (consumer != null) {
-                log.debug("Closing the " + consumer);
+                if (log.isDebugEnabled())
+                    log.debug("Closing the " + consumer);
                 consumer.close();
             }
         } catch (Throwable t) {

@@ -37,20 +37,24 @@ public class JmsMetaData implements ManagedConnectionMetaData {
         this.mc = mc;
     }
 
+    @Override
     public String getEISProductName() throws ResourceException {
         return "JBoss Generic JMS JCA Resource Adapter";
     }
 
+    @Override
     public String getEISProductVersion() throws ResourceException {
         return "0.1";//Is this possible to get another way
     }
 
+    @Override
     public int getMaxConnections() throws ResourceException {
         // Dont know how to get this, from Jms, we
         // set it to unlimited
         return 0;
     }
 
+    @Override
     public String getUserName() throws ResourceException {
         return mc.getUserName();
     }

@@ -40,98 +40,122 @@ public class JmsStreamMessage extends JmsMessage implements StreamMessage {
         super(message, session);
     }
 
+    @Override
     public boolean readBoolean() throws JMSException {
         return ((StreamMessage) message).readBoolean();
     }
 
+    @Override
     public byte readByte() throws JMSException {
         return ((StreamMessage) message).readByte();
     }
 
+    @Override
     public int readBytes(byte[] value) throws JMSException {
         return ((StreamMessage) message).readBytes(value);
     }
 
+    @Override
     public char readChar() throws JMSException {
         return ((StreamMessage) message).readChar();
     }
 
+    @Override
     public double readDouble() throws JMSException {
         return ((StreamMessage) message).readDouble();
     }
 
+    @Override
     public float readFloat() throws JMSException {
         return ((StreamMessage) message).readFloat();
     }
 
+    @Override
     public int readInt() throws JMSException {
         return ((StreamMessage) message).readInt();
     }
 
+    @Override
     public long readLong() throws JMSException {
         return ((StreamMessage) message).readLong();
     }
 
+    @Override
     public Object readObject() throws JMSException {
         return ((StreamMessage) message).readObject();
     }
 
+    @Override
     public short readShort() throws JMSException {
         return ((StreamMessage) message).readShort();
     }
 
+    @Override
     public String readString() throws JMSException {
         return ((StreamMessage) message).readString();
     }
 
+    @Override
     public void reset() throws JMSException {
         ((StreamMessage) message).reset();
     }
 
+    @Override
     public void writeBoolean(boolean value) throws JMSException {
         ((StreamMessage) message).writeBoolean(value);
     }
 
+    @Override
     public void writeByte(byte value) throws JMSException {
         ((StreamMessage) message).writeByte(value);
     }
 
+    @Override
     public void writeBytes(byte[] value, int offset, int length) throws JMSException {
         ((StreamMessage) message).writeBytes(value, offset, length);
     }
 
+    @Override
     public void writeBytes(byte[] value) throws JMSException {
         ((StreamMessage) message).writeBytes(value);
     }
 
+    @Override
     public void writeChar(char value) throws JMSException {
         ((StreamMessage) message).writeChar(value);
     }
 
+    @Override
     public void writeDouble(double value) throws JMSException {
         ((StreamMessage) message).writeDouble(value);
     }
 
+    @Override
     public void writeFloat(float value) throws JMSException {
         ((StreamMessage) message).writeFloat(value);
     }
 
+    @Override
     public void writeInt(int value) throws JMSException {
         ((StreamMessage) message).writeInt(value);
     }
 
+    @Override
     public void writeLong(long value) throws JMSException {
         ((StreamMessage) message).writeLong(value);
     }
 
+    @Override
     public void writeObject(Object value) throws JMSException {
         ((StreamMessage) message).writeObject(value);
     }
 
+    @Override
     public void writeShort(short value) throws JMSException {
         ((StreamMessage) message).writeShort(value);
     }
 
+    @Override
     public void writeString(String value) throws JMSException {
         ((StreamMessage) message).writeString(value);
     }

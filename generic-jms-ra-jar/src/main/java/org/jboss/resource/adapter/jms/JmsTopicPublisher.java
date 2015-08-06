@@ -51,10 +51,12 @@ public class JmsTopicPublisher extends JmsMessageProducer implements TopicPublis
         super(producer, session);
     }
 
+    @Override
     public Topic getTopic() throws JMSException {
         return ((TopicPublisher) producer).getTopic();
     }
 
+    @Override
     public void publish(Message message, int deliveryMode, int priority, long timeToLive) throws JMSException {
         session.lock();
         try {
@@ -68,6 +70,7 @@ public class JmsTopicPublisher extends JmsMessageProducer implements TopicPublis
             log.trace("sent " + this + " result=" + message);
     }
 
+    @Override
     public void publish(Message message) throws JMSException {
         session.lock();
         try {
@@ -81,6 +84,7 @@ public class JmsTopicPublisher extends JmsMessageProducer implements TopicPublis
         }
     }
 
+    @Override
     public void publish(Topic destination, Message message, int deliveryMode, int priority, long timeToLive)
             throws JMSException {
         session.lock();
@@ -95,6 +99,7 @@ public class JmsTopicPublisher extends JmsMessageProducer implements TopicPublis
         }
     }
 
+    @Override
     public void publish(Topic destination, Message message) throws JMSException {
         session.lock();
         try {

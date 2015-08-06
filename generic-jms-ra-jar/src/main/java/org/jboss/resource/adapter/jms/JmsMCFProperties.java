@@ -167,6 +167,7 @@ public class JmsMCFProperties implements java.io.Serializable {
     /**
      * Test for equality.
      */
+    @Override
     public boolean equals(Object obj) {
         if (obj == null) return false;
 
@@ -183,6 +184,7 @@ public class JmsMCFProperties implements java.io.Serializable {
     /**
      * Simple hashCode of all attributes.
      */
+    @Override
     public int hashCode() {
         // FIXME
         String result = "" + userName + password + type;

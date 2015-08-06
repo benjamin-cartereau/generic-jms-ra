@@ -109,6 +109,7 @@ public class JmsConnectionRequestInfo implements ConnectionRequestInfo {
         return type;
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (obj == null) return false;
         if (obj instanceof JmsConnectionRequestInfo) {
@@ -124,6 +125,7 @@ public class JmsConnectionRequestInfo implements ConnectionRequestInfo {
         }
     }
 
+    @Override
     public int hashCode() {
         int hashCode = 0;
         if (transacted)

@@ -45,8 +45,8 @@ import javax.transaction.xa.XAResource;
  * A generic jms session pool.
  *
  * @author <a href="adrian@jboss.com">Adrian Brock</a>
- * @author <a href="mailto:weston.price@jboss.com>Weston Price</a>
- * @author <a href="mailto:jbertram@rehat.com>Justin Bertram</a>
+ * @author <a href="mailto:weston.price@jboss.com">Weston Price</a>
+ * @author <a href="mailto:jbertram@rehat.com">Justin Bertram</a>
  */
 public class JmsServerSession implements ServerSession, MessageListener, Work, WorkListener {
     /**
@@ -87,6 +87,7 @@ public class JmsServerSession implements ServerSession, MessageListener, Work, W
 
     /**
      * Setup the session
+     * @throws java.lang.Exception
      */
     public void setup() throws Exception {
         JmsActivation activation = pool.getActivation();
@@ -147,6 +148,7 @@ public class JmsServerSession implements ServerSession, MessageListener, Work, W
         }
     }
 
+    @Override
     public void onMessage(Message message) {
         try {
             final int timeout = pool.getActivation().getActivationSpec().getTransactionTimeout();
@@ -169,10 +171,12 @@ public class JmsServerSession implements ServerSession, MessageListener, Work, W
         }
     }
 
+    @Override
     public Session getSession() throws JMSException {
         return session;
     }
 
+    @Override
     public void start() throws JMSException {
         JmsActivation activation = pool.getActivation();
         WorkManager workManager = activation.getWorkManager();
@@ -184,24 +188,30 @@ public class JmsServerSession implements ServerSession, MessageListener, Work, W
         }
     }
 
+    @Override
     public void run() {
         session.run();
     }
 
+    @Override
     public void release() {
     }
 
+    @Override
     public void workAccepted(WorkEvent e) {
     }
 
+    @Override
     public void workCompleted(WorkEvent e) {
         pool.returnServerSession(this);
     }
 
+    @Override
     public void workRejected(WorkEvent e) {
         pool.returnServerSession(this);
     }
 
+    @Override
     public void workStarted(WorkEvent e) {
     }
 }

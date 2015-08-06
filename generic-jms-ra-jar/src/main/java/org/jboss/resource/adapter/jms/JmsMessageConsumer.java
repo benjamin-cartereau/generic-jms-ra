@@ -70,6 +70,7 @@ public class JmsMessageConsumer implements MessageConsumer {
             log.trace("new JmsMessageConsumer " + this + " consumer=" + consumer + " session=" + session);
     }
 
+    @Override
     public void close() throws JMSException {
         if (trace)
             log.trace("close " + this);
@@ -80,15 +81,18 @@ public class JmsMessageConsumer implements MessageConsumer {
         }
     }
 
+    @Override
     public MessageListener getMessageListener() throws JMSException {
         session.checkStrict();
         return consumer.getMessageListener();
     }
 
+    @Override
     public String getMessageSelector() throws JMSException {
         return consumer.getMessageSelector();
     }
 
+    @Override
     public Message receive() throws JMSException {
         session.lock();
         try {
@@ -106,6 +110,7 @@ public class JmsMessageConsumer implements MessageConsumer {
         }
     }
 
+    @Override
     public Message receive(long timeout) throws JMSException {
         session.lock();
         try {
@@ -123,6 +128,7 @@ public class JmsMessageConsumer implements MessageConsumer {
         }
     }
 
+    @Override
     public Message receiveNoWait() throws JMSException {
         session.lock();
         try {
@@ -140,6 +146,7 @@ public class JmsMessageConsumer implements MessageConsumer {
         }
     }
 
+    @Override
     public void setMessageListener(MessageListener listener) throws JMSException {
         session.lock();
         try {

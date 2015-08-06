@@ -404,14 +404,17 @@ public class JmsActivationSpec implements ActivationSpec {
         return maxSession;
     }
 
+    @Override
     public ResourceAdapter getResourceAdapter() {
         return ra;
     }
 
+    @Override
     public void setResourceAdapter(ResourceAdapter ra) throws ResourceException {
         this.ra = ra;
     }
 
+    @Override
     public void validate() throws InvalidPropertyException {
         if (log.isTraceEnabled()) {
             log.trace("validate " + this);
@@ -426,8 +429,9 @@ public class JmsActivationSpec implements ActivationSpec {
         }
     }
 
+    @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(JmsActivation.defaultToString(this)).append('(');
         buffer.append("ra=").append(ra);
         buffer.append(" destination=").append(destination);

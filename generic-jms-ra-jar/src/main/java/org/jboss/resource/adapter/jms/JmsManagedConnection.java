@@ -208,6 +208,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
      * @return A new connection object.
      * @throws ResourceException
      */
+    @Override
     public Object getConnection(final Subject subject, final ConnectionRequestInfo info) throws ResourceException {
         // Check user first
         JmsCred cred = JmsCred.getJmsCred(mcf, subject, info);
@@ -261,6 +262,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
      *
      * @throws ResourceException Could not property close the session and connection.
      */
+    @Override
     public void destroy() throws ResourceException {
         if (isDestroyed || con == null) {
             return;
@@ -299,6 +301,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
      *
      * Does that mean that authentication should be redone. FIXME
      */
+    @Override
     public void cleanup() throws ResourceException {
         if (isDestroyed) {
             throw new IllegalStateException("ManagedConnection already destroyed");
@@ -338,8 +341,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
         }
 
         try {
-        	if ((con.getClientID() != null) &&
-            		!con.getClientID().toUpperCase().equals("JMSUSER")) {  // Oracle AQ Sucks!
+            if (con.getClientID() != null) {
                 throw new ResourceException("Cleaning up " + this + " bound to clientID = " + con.getClientID());
             }
         } catch (JMSException e) {
@@ -354,6 +356,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
      * @throws ResourceException     Failed to associate connection.
      * @throws IllegalStateException ManagedConnection in an illegal state.
      */
+    @Override
     public void associateConnection(final Object obj) throws ResourceException {
         //
         // Should we check auth, ie user and pwd? FIXME
@@ -406,6 +409,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
      *
      * @param l The connection event listener to be added.
      */
+    @Override
     public void addConnectionEventListener(final ConnectionEventListener l) {
         listeners.addElement(l);
 
@@ -419,6 +423,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
      *
      * @param l The connection event listener to be removed.
      */
+    @Override
     public void removeConnectionEventListener(final ConnectionEventListener l) {
         listeners.removeElement(l);
     }
@@ -429,6 +434,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
      * @return The XAResource for the connection.
      * @throws ResourceException XA transaction not supported
      */
+    @Override
     public XAResource getXAResource() throws ResourceException {
         //
         // Spec says a mc must always return the same XA resource,
@@ -456,6 +462,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
      * @return The local transaction for the connection.
      * @throws ResourceException
      */
+    @Override
     public LocalTransaction getLocalTransaction() throws ResourceException {
         LocalTransaction tx = new JmsLocalTransaction(this);
         if (log.isTraceEnabled()) {
@@ -471,6 +478,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
      * @throws ResourceException
      * @throws IllegalStateException ManagedConnection already destroyed.
      */
+    @Override
     public ManagedConnectionMetaData getMetaData() throws ResourceException {
         if (isDestroyed) {
             throw new IllegalStateException("ManagedConnection already destroyd");
@@ -485,6 +493,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
      * @param out The log writer for this connection.
      * @throws ResourceException
      */
+    @Override
     public void setLogWriter(final PrintWriter out) throws ResourceException {
         //
         // jason: screw the logWriter stuff for now it sucks ass
@@ -496,6 +505,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
      *
      * @return Always null
      */
+    @Override
     public PrintWriter getLogWriter() throws ResourceException {
         //
         // jason: screw the logWriter stuff for now it sucks ass
@@ -506,6 +516,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
 
     // --- Exception listener implementation
 
+    @Override
     public void onException(JMSException exception) {
         if (isDestroyed) {
             if (log.isTraceEnabled()) {
@@ -636,25 +647,6 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
         return user;
     }
 
-    private Object findFactory(Context context) throws IllegalStateException, NamingException {
-    	Object factory = null;
-    	String connectionFactory = null;
-    	if (mcf.getProperties().getType() == JmsConnectionFactory.QUEUE) {
-            connectionFactory = mcf.getQueueConnectionFactory();
-        }
-    	else if (mcf.getProperties().getType() == JmsConnectionFactory.TOPIC) {
-    		connectionFactory = mcf.getQueueConnectionFactory();
-    	}
-        else {
-            connectionFactory = mcf.getConnectionFactory();
-        }
-    	if (connectionFactory == null) {
-    		throw new IllegalStateException("No configured connection factory");
-    	}
-    	factory = context.lookup(connectionFactory);
-    	return factory;
-    }
-    
     /**
      * Setup the connection.
      *
@@ -671,7 +663,11 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
             boolean transacted = info.isTransacted();
             int ack = transacted ? 0 : info.getAcknowledgeMode();
 
-            factory = findFactory(context);
+            String connectionFactory = mcf.getConnectionFactory();
+            if (connectionFactory == null) {
+                throw new IllegalStateException("No configured 'connectionFactory'.");
+            }
+            factory = context.lookup(connectionFactory);
             con = createConnection(factory, user, pwd);
             if (info.getClientID() != null && !info.getClientID().equals(con.getClientID())) {
                 con.setClientID(info.getClientID());

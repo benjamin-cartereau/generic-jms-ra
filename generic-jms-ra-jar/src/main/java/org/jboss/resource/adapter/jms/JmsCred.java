@@ -73,6 +73,7 @@ public class JmsCred {
         return jc;
     }
 
+    @Override
     public String toString() {
         return super.toString() + "{ username=" + name + ", password=**** }";
     }
@@ -86,6 +87,7 @@ public class JmsCred {
             this.mcf = mcf;
         }
 
+        @Override
         public PasswordCredential run() {
             Set<PasswordCredential> creds = subject.getPrivateCredentials(PasswordCredential.class);
             PasswordCredential pwdc = null;

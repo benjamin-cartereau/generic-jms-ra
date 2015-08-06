@@ -57,6 +57,7 @@ public interface JmsSessionFactory extends Connection, TopicConnection, QueueCon
     /**
      * Notification that a session is closed
      *
+     * @param session JMS session
      * @throws JMSException for any error
      */
     void closeSession(JmsSession session) throws JMSException;

@@ -69,12 +69,14 @@ public class JmsResourceAdapter implements ResourceAdapter {
         return ctx.getWorkManager();
     }
 
+    @Override
     public void endpointActivation(MessageEndpointFactory endpointFactory, ActivationSpec spec) throws ResourceException {
         JmsActivation activation = new JmsActivation(this, endpointFactory, (JmsActivationSpec) spec);
         activations.put(spec, activation);
         activation.start();
     }
 
+    @Override
     public void endpointDeactivation(MessageEndpointFactory endpointFactory, ActivationSpec spec) {
         JmsActivation activation = (JmsActivation) activations.remove(spec);
         if (activation != null) {
@@ -82,14 +84,17 @@ public class JmsResourceAdapter implements ResourceAdapter {
         }
     }
 
+    @Override
     public XAResource[] getXAResources(ActivationSpec[] specs) throws ResourceException {
         return null;
     }
 
+    @Override
     public void start(BootstrapContext ctx) throws ResourceAdapterInternalException {
         this.ctx = ctx;
     }
 
+    @Override
     public void stop() {
     	for (Iterator<Entry<ActivationSpec, JmsActivation>> i = activations.entrySet().iterator(); i.hasNext(); ) {
             Map.Entry<ActivationSpec, JmsActivation> entry = i.next();
@@ -105,6 +110,7 @@ public class JmsResourceAdapter implements ResourceAdapter {
         }
     }
 
+    @Override
     public int hashCode() {
         int hashCode = 0;
 
@@ -119,6 +125,7 @@ public class JmsResourceAdapter implements ResourceAdapter {
         return hashCode;
     }
 
+    @Override
     public boolean equals(Object other) {
         // TODO
         return false;

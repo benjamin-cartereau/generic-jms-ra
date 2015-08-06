@@ -55,6 +55,7 @@ public class SecurityActions {
             Thread.currentThread().setContextClassLoader(cl);
         } else {
             AccessController.doPrivileged(new PrivilegedAction<Object>() {
+                @Override
                 public Object run() {
                     Thread.currentThread().setContextClassLoader(cl);
 
@@ -75,6 +76,7 @@ public class SecurityActions {
             return clazz.getClassLoader();
         }
         return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
+            @Override
             public ClassLoader run() {
                 return clazz.getClassLoader();
             }

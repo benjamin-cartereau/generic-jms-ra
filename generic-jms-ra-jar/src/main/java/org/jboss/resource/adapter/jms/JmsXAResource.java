@@ -52,6 +52,7 @@ public class JmsXAResource implements XAResource {
         this.xaResource = xaResource;
     }
 
+    @Override
     public void start(Xid xid, int flags) throws XAException {
         managedConnection.lock();
         try {
@@ -61,6 +62,7 @@ public class JmsXAResource implements XAResource {
         }
     }
 
+    @Override
     public void end(Xid xid, int flags) throws XAException {
         managedConnection.lock();
         try {
@@ -70,6 +72,7 @@ public class JmsXAResource implements XAResource {
         }
     }
 
+    @Override
     public int prepare(Xid xid) throws XAException {
         managedConnection.lock();
         try {
@@ -79,6 +82,7 @@ public class JmsXAResource implements XAResource {
         }
     }
 
+    @Override
     public void commit(Xid xid, boolean onePhase) throws XAException {
         managedConnection.lock();
         try {
@@ -88,6 +92,7 @@ public class JmsXAResource implements XAResource {
         }
     }
 
+    @Override
     public void rollback(Xid xid) throws XAException {
         managedConnection.lock();
         try {
@@ -97,6 +102,7 @@ public class JmsXAResource implements XAResource {
         }
     }
 
+    @Override
     public void forget(Xid xid) throws XAException {
         managedConnection.lock();
         try {
@@ -110,6 +116,7 @@ public class JmsXAResource implements XAResource {
         return xaResource;
     }
 
+    @Override
     public boolean isSameRM(XAResource xaRes) throws XAException {
         if (xaRes instanceof JmsXAResource)
             xaRes = ((JmsXAResource) xaRes).getUnderlyingXAResource();
@@ -117,14 +124,17 @@ public class JmsXAResource implements XAResource {
         return xaResource.isSameRM(xaRes);
     }
 
+    @Override
     public Xid[] recover(int flag) throws XAException {
         return xaResource.recover(flag);
     }
 
+    @Override
     public int getTransactionTimeout() throws XAException {
         return xaResource.getTransactionTimeout();
     }
 
+    @Override
     public boolean setTransactionTimeout(int seconds) throws XAException {
         return xaResource.setTransactionTimeout(seconds);
     }

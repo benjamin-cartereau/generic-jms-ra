@@ -46,6 +46,7 @@ public class ReentrantLock extends java.util.concurrent.locks.ReentrantLock {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Thread getOwner() {
         return super.getOwner();
     }
@@ -53,6 +54,7 @@ public class ReentrantLock extends java.util.concurrent.locks.ReentrantLock {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Collection<Thread> getQueuedThreads() {
         return super.getQueuedThreads();
     }
