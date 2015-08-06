@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
+    <wb-module deploy-name="generic-jms-ra">
+        <wb-resource deploy-path="/" source-path="/src/main/rar" tag="defaultRootSource"/>
+        <wb-resource deploy-path="/" source-path="/src/main/java"/>
+        <dependent-module archiveName="generic-jms-ra-jar-1.0.8.Final-SNAPSHOT.jar" deploy-path="/" handle="module:/resource/generic-jms-ra-jar/generic-jms-ra-jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module deploy-path="/" handle="module:/classpath/var/M2_REPO/org/jboss/logging/jboss-logging/3.1.0.GA/jboss-logging-3.1.0.GA.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <property name="java-output-path" value="/generic-jms-ra/target/classes"/>
+    </wb-module>
+</project-modules>

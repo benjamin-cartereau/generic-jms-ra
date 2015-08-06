@@ -44,6 +44,8 @@ public class JmsMCFProperties implements java.io.Serializable {
     String clientID;
     String jndiParameters;
     String connectionFactory;
+    String queueConnectionFactory;
+    String topicConnectionFactory;
     int type = JmsConnectionFactory.AGNOSTIC;
 
     public JmsMCFProperties() {
@@ -114,6 +116,22 @@ public class JmsMCFProperties implements java.io.Serializable {
         this.connectionFactory = connectionFactory;
     }
 
+    public String getQueueConnectionFactory() {
+		return queueConnectionFactory;
+	}
+
+	public void setQueueConnectionFactory(String queueConnectionFactory) {
+		this.queueConnectionFactory = queueConnectionFactory;
+	}
+
+	public String getTopicConnectionFactory() {
+		return topicConnectionFactory;
+	}
+
+	public void setTopicConnectionFactory(String topicConnectionFactory) {
+		this.topicConnectionFactory = topicConnectionFactory;
+	}
+	
     public String getJndiParameters() {
         return jndiParameters;
     }

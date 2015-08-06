@@ -21,8 +21,14 @@
  */
 package org.jboss.resource.adapter.jms;
 
-import org.jboss.logging.Logger;
-import org.jboss.resource.adapter.jms.inflow.JmsActivation;
+import java.io.PrintWriter;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.Vector;
+import java.util.concurrent.TimeUnit;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -45,7 +51,6 @@ import javax.jms.XATopicConnectionFactory;
 import javax.jms.XATopicSession;
 import javax.naming.Context;
 import javax.naming.NamingException;
-import javax.resource.NotSupportedException;
 import javax.resource.ResourceException;
 import javax.resource.spi.ConnectionEvent;
 import javax.resource.spi.ConnectionEventListener;
@@ -57,14 +62,9 @@ import javax.resource.spi.ManagedConnectionMetaData;
 import javax.resource.spi.SecurityException;
 import javax.security.auth.Subject;
 import javax.transaction.xa.XAResource;
-import java.io.PrintWriter;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.Vector;
-import java.util.concurrent.TimeUnit;
+
+import org.jboss.logging.Logger;
+import org.jboss.resource.adapter.jms.inflow.JmsActivation;
 
 /**
  * <p>Managed Connection, manages one or more JMS sessions.
@@ -153,12 +153,12 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
     /**
      * Holds all current JmsSession handles.
      */
-    private Set handles = Collections.synchronizedSet(new HashSet());
+    private Set<JmsSession> handles = Collections.synchronizedSet(new HashSet<JmsSession>());
 
     /**
      * The event listeners
      */
-    private Vector listeners = new Vector();
+    private Vector<ConnectionEventListener> listeners = new Vector<ConnectionEventListener>();
 
     /**
      * Create a <tt>JmsManagedConnection</tt>.
@@ -248,9 +248,9 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
             log.trace("Ignored error stopping connection", t);
         }
 
-        Iterator iter = handles.iterator();
+        Iterator<JmsSession> iter = handles.iterator();
         while (iter.hasNext())
-            ((JmsSession) iter.next()).destroy();
+            iter.next().destroy();
 
         // clear the handles map
         handles.clear();
@@ -338,7 +338,8 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
         }
 
         try {
-            if (con.getClientID() != null) {
+        	if ((con.getClientID() != null) &&
+            		!con.getClientID().toUpperCase().equals("JMSUSER")) {  // Oracle AQ Sucks!
                 throw new ResourceException("Cleaning up " + this + " bound to clientID = " + con.getClientID());
             }
         } catch (JMSException e) {
@@ -635,6 +636,25 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
         return user;
     }
 
+    private Object findFactory(Context context) throws IllegalStateException, NamingException {
+    	Object factory = null;
+    	String connectionFactory = null;
+    	if (mcf.getProperties().getType() == JmsConnectionFactory.QUEUE) {
+            connectionFactory = mcf.getQueueConnectionFactory();
+        }
+    	else if (mcf.getProperties().getType() == JmsConnectionFactory.TOPIC) {
+    		connectionFactory = mcf.getQueueConnectionFactory();
+    	}
+        else {
+            connectionFactory = mcf.getConnectionFactory();
+        }
+    	if (connectionFactory == null) {
+    		throw new IllegalStateException("No configured connection factory");
+    	}
+    	factory = context.lookup(connectionFactory);
+    	return factory;
+    }
+    
     /**
      * Setup the connection.
      *
@@ -651,11 +671,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
             boolean transacted = info.isTransacted();
             int ack = transacted ? 0 : info.getAcknowledgeMode();
 
-            String connectionFactory = mcf.getConnectionFactory();
-            if (connectionFactory == null) {
-                throw new IllegalStateException("No configured 'connectionFactory'.");
-            }
-            factory = context.lookup(connectionFactory);
+            factory = findFactory(context);
             con = createConnection(factory, user, pwd);
             if (info.getClientID() != null && !info.getClientID().equals(con.getClientID())) {
                 con.setClientID(info.getClientID());
