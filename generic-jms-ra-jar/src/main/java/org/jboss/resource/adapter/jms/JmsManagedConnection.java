@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 
 import javax.jms.Connection;
@@ -67,40 +66,47 @@ import org.jboss.logging.Logger;
 import org.jboss.resource.adapter.jms.inflow.JmsActivation;
 
 /**
- * <p>Managed Connection, manages one or more JMS sessions.
+ * <p>
+ * Managed Connection, manages one or more JMS sessions.
  * <p/>
- * <p>Every ManagedConnection will have a physical JMSConnection under the
- * hood. This may leave out several session, as specifyed in 5.5.4 Multiple
- * Connection Handles. Thread safe semantics is provided
+ * <p>
+ * Every ManagedConnection will have a physical JMSConnection under the hood.
+ * This may leave out several session, as specifyed in 5.5.4 Multiple Connection
+ * Handles. Thread safe semantics is provided
  * <p/>
- * <p>Hm. If we are to follow the example in 6.11 this will not work. We would
- * have to use the SAME session. This means we will have to guard against
- * concurrent access. We use a stack, and only allowes the handle at the
- * top of the stack to do things.
+ * <p>
+ * Hm. If we are to follow the example in 6.11 this will not work. We would have
+ * to use the SAME session. This means we will have to guard against concurrent
+ * access. We use a stack, and only allowes the handle at the top of the stack
+ * to do things.
  * <p/>
- * <p>As to transactions we some fairly hairy alternatives to handle:
- * XA - we get an XA. We may now only do transaction through the
- * XAResource, since a XASession MUST throw exceptions in commit etc. But
- * since XA support implies LocatTransaction support, we will have to use
- * the XAResource in the LocalTransaction class.
- * LocalTx - we get a normal session. The LocalTransaction will then work
- * against the normal session api.
+ * <p>
+ * As to transactions we some fairly hairy alternatives to handle: XA - we get
+ * an XA. We may now only do transaction through the XAResource, since a
+ * XASession MUST throw exceptions in commit etc. But since XA support implies
+ * LocatTransaction support, we will have to use the XAResource in the
+ * LocalTransaction class. LocalTx - we get a normal session. The
+ * LocalTransaction will then work against the normal session api.
  * <p/>
- * <p>An invokation of JMS MAY BE DONE in none transacted context. What do we
- * do then? How much should we leave to the user???
+ * <p>
+ * An invokation of JMS MAY BE DONE in none transacted context. What do we do
+ * then? How much should we leave to the user???
  * <p/>
- * <p>One possible solution is to use transactions any way, but under the hood.
- * If not LocalTransaction or XA has been aquired by the container, we have
- * to do the commit in send and publish. (CHECK is the container required
- * to get a XA every time it uses a managed connection? No its is not, only
- * at creation!)
+ * <p>
+ * One possible solution is to use transactions any way, but under the hood. If
+ * not LocalTransaction or XA has been aquired by the container, we have to do
+ * the commit in send and publish. (CHECK is the container required to get a XA
+ * every time it uses a managed connection? No its is not, only at creation!)
  * <p/>
- * <p>Does this mean that a session one time may be used in a transacted env,
- * and another time in a not transacted.
+ * <p>
+ * Does this mean that a session one time may be used in a transacted env, and
+ * another time in a not transacted.
  * <p/>
- * <p>Maybe we could have this simple rule:
+ * <p>
+ * Maybe we could have this simple rule:
  * <p/>
- * <p>If a user is going to use non trans:
+ * <p>
+ * If a user is going to use non trans:
  * <ul>
  * <li>mark that i ra deployment descr
  * <li>Use a JmsProviderAdapter with non XA factorys
@@ -108,31 +114,34 @@ import org.jboss.resource.adapter.jms.inflow.JmsActivation;
  * <li>trans attrinbutes in deploy descr NOT GOOD
  * </ul>
  * <p/>
- * <p>From the JMS tutorial:
- * "When you create a session in an enterprise bean, the container ignores
- * the arguments you specify, because it manages all transactional
- * properties for enterprise beans."
+ * <p>
+ * From the JMS tutorial: "When you create a session in an enterprise bean, the
+ * container ignores the arguments you specify, because it manages all
+ * transactional properties for enterprise beans."
  * <p/>
- * <p>And further:
- * "You do not specify a message acknowledgment mode when you create a
- * message-driven bean that uses container-managed transactions. The
+ * <p>
+ * And further: "You do not specify a message acknowledgment mode when you
+ * create a message-driven bean that uses container-managed transactions. The
  * container handles acknowledgment automatically."
  * <p/>
- * <p>On Session or Connection:
- * <p>From Tutorial:
- * "A JMS API resource is a JMS API connection or a JMS API session." But in
- * the J2EE spec only connection is considered a resource.
+ * <p>
+ * On Session or Connection:
+ * <p>
+ * From Tutorial: "A JMS API resource is a JMS API connection or a JMS API
+ * session." But in the J2EE spec only connection is considered a resource.
  * <p/>
- * <p>Not resolved: connectionErrorOccurred: it is verry hard to know from the
+ * <p>
+ * Not resolved: connectionErrorOccurred: it is verry hard to know from the
  * exceptions thrown if it is a connection error. Should we register an
- * ExceptionListener and mark al handles as errounous? And then let them
- * send the event and throw an exception?
+ * ExceptionListener and mark al handles as errounous? And then let them send
+ * the event and throw an exception?
  *
  * @author <a href="mailto:peter.antman@tim.se">Peter Antman</a>.
  * @author <a href="mailto:jason@planet57.com">Jason Dillon</a>
  * @author <a href="mailto:adrian@jboss.com">Adrian Brock</a>
  */
 public class JmsManagedConnection implements ManagedConnection, ExceptionListener {
+
     private static final Logger log = Logger.getLogger(JmsManagedConnection.class);
 
     private JmsManagedConnectionFactory mcf;
@@ -158,10 +167,10 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
     /**
      * The event listeners
      */
-    private Vector<ConnectionEventListener> listeners = new Vector<ConnectionEventListener>();
+    private Set<ConnectionEventListener> listeners = Collections.synchronizedSet(new HashSet<ConnectionEventListener>());
 
     /**
-     * Create a <tt>JmsManagedConnection</tt>.
+     * Creates a <tt>JmsManagedConnection</tt>.
      *
      * @param mcf
      * @param info
@@ -170,9 +179,9 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
      * @throws ResourceException
      */
     public JmsManagedConnection(final JmsManagedConnectionFactory mcf,
-                                final ConnectionRequestInfo info,
-                                final String user,
-                                final String pwd)
+            final ConnectionRequestInfo info,
+            final String user,
+            final String pwd)
             throws ResourceException {
         this.mcf = mcf;
 
@@ -193,15 +202,15 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
     }
 
     //---- ManagedConnection API ----
-
     /**
-     * Get the physical connection handler.
-     * This bummer will be called in two situations:
+     * Get the physical connection handler. This bummer will be called in two
+     * situations:
      * <ol>
      * <li>When a new mc has bean created and a connection is needed
      * <li>When an mc has been fetched from the pool (returned in match*)
      * </ol>
-     * It may also be called multiple time without a cleanup, to support connection sharing.
+     * It may also be called multiple time without a cleanup, to support
+     * connection sharing.
      *
      * @param subject
      * @param info
@@ -215,12 +224,10 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
 
         // Null users are allowed!
         if (user != null && !user.equals(cred.name)) {
-            throw new SecurityException
-                    ("Password credentials not the same, reauthentication not allowed");
+            throw new SecurityException("Password credentials not the same, reauthentication not allowed");
         }
         if (cred.name != null && user == null) {
-            throw new SecurityException
-                    ("Password credentials not the same, reauthentication not allowed");
+            throw new SecurityException("Password credentials not the same, reauthentication not allowed");
         }
 
         user = cred.name; // Basically meaningless
@@ -250,8 +257,9 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
         }
 
         Iterator<JmsSession> iter = handles.iterator();
-        while (iter.hasNext())
+        while (iter.hasNext()) {
             iter.next().destroy();
+        }
 
         // clear the handles map
         handles.clear();
@@ -260,7 +268,8 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
     /**
      * Destroy the physical connection.
      *
-     * @throws ResourceException Could not property close the session and connection.
+     * @throws ResourceException Could not property close the session and
+     * connection.
      */
     @Override
     public void destroy() throws ResourceException {
@@ -297,7 +306,8 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
     }
 
     /**
-     * Cleans up, from the spec - The cleanup of ManagedConnection instance resets its client specific state.
+     * Cleans up, from the spec - The cleanup of ManagedConnection instance
+     * resets its client specific state.
      *
      * Does that mean that authentication should be redone. FIXME
      */
@@ -353,7 +363,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
      * Move a handler from one mc to this one.
      *
      * @param obj An object of type JmsSession.
-     * @throws ResourceException     Failed to associate connection.
+     * @throws ResourceException Failed to associate connection.
      * @throws IllegalStateException ManagedConnection in an illegal state.
      */
     @Override
@@ -367,8 +377,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
             h.setManagedConnection(this);
             handles.add(h);
         } else {
-            throw new IllegalStateException
-                    ("ManagedConnection in an illegal state");
+            throw new IllegalStateException("ManagedConnection in an illegal state");
         }
     }
 
@@ -411,7 +420,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
      */
     @Override
     public void addConnectionEventListener(final ConnectionEventListener l) {
-        listeners.addElement(l);
+        listeners.add(l);
 
         if (log.isTraceEnabled()) {
             log.trace("ConnectionEvent listener added: " + l);
@@ -425,7 +434,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
      */
     @Override
     public void removeConnectionEventListener(final ConnectionEventListener l) {
-        listeners.removeElement(l);
+        listeners.remove(l);
     }
 
     /**
@@ -515,7 +524,6 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
     }
 
     // --- Exception listener implementation
-
     @Override
     public void onException(JMSException exception) {
         if (isDestroyed) {
@@ -545,7 +553,6 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
     }
 
     // --- Api to JmsSession
-
     /**
      * Get the session for this connection.
      *
@@ -568,8 +575,8 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
         }
 
         // convert to an array to avoid concurrent modification exceptions
-        ConnectionEventListener[] list =
-                (ConnectionEventListener[]) listeners.toArray(new ConnectionEventListener[listeners.size()]);
+        ConnectionEventListener[] list
+                = (ConnectionEventListener[]) listeners.toArray(new ConnectionEventListener[listeners.size()]);
 
         for (int i = 0; i < list.length; i++) {
             switch (type) {
@@ -609,7 +616,6 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
     }
 
     // --- Used by MCF
-
     /**
      * Get the request info for this connection.
      *
@@ -637,7 +643,6 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
     }
 
     // --- Used by MetaData
-
     /**
      * Get the user name for this connection.
      *
@@ -645,6 +650,30 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
      */
     protected String getUserName() {
         return user;
+    }
+
+    /**
+     * Find the right factory
+     * @param context JNDI context
+     * @return Object the right factory
+     * @throws IllegalStateException No configured connection factory
+     * @throws NamingException JNDI error
+     */
+    private Object findFactory(Context context) throws IllegalStateException, NamingException {
+        Object factory = null;
+        String connectionFactory = null;
+        if (mcf.getProperties().getType() == JmsConnectionFactory.QUEUE) {
+            connectionFactory = mcf.getQueueConnectionFactory();
+        } else if (mcf.getProperties().getType() == JmsConnectionFactory.TOPIC) {
+            connectionFactory = mcf.getQueueConnectionFactory();
+        } else {
+            connectionFactory = mcf.getConnectionFactory();
+        }
+        if (connectionFactory == null) {
+            throw new IllegalStateException("No configured connection factory");
+        }
+        factory = context.lookup(connectionFactory);
+        return factory;
     }
 
     /**
@@ -659,7 +688,7 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
             SecurityActions.setThreadContextClassLoader(JmsManagedConnection.class.getClassLoader());
 
             Context context = JmsActivation.convertStringToContext(mcf.getJndiParameters());
-            Object factory;
+            Object factory = findFactory(context);
             boolean transacted = info.isTransacted();
             int ack = transacted ? 0 : info.getAcknowledgeMode();
 
@@ -667,7 +696,6 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
             if (connectionFactory == null) {
                 throw new IllegalStateException("No configured 'connectionFactory'.");
             }
-            factory = context.lookup(connectionFactory);
             con = createConnection(factory, user, pwd);
             if (info.getClientID() != null && !info.getClientID().equals(con.getClientID())) {
                 con.setClientID(info.getClientID());
@@ -680,10 +708,10 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
             if (con instanceof XAConnection && transacted) {
                 if (mcf.getProperties().getType() == JmsConnectionFactory.QUEUE) {
                     xaSession = ((XAQueueConnection) con).createXAQueueSession();
-                    session = ((XAQueueSession)xaSession).getQueueSession();
+                    session = ((XAQueueSession) xaSession).getQueueSession();
                 } else if (mcf.getProperties().getType() == JmsConnectionFactory.TOPIC) {
                     xaSession = ((XATopicConnection) con).createXATopicSession();
-                    session = ((XATopicSession)xaSession).getTopicSession();
+                    session = ((XATopicSession) xaSession).getTopicSession();
                 } else {
                     xaSession = ((XAConnection) con).createXASession();
                     session = xaSession.getSession();
@@ -692,15 +720,15 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
                 xaTransacted = true;
             } else {
                 if (mcf.getProperties().getType() == JmsConnectionFactory.QUEUE) {
-                    session = ((QueueConnection)con).createQueueSession(transacted, ack);
+                    session = ((QueueConnection) con).createQueueSession(transacted, ack);
                 } else if (mcf.getProperties().getType() == JmsConnectionFactory.TOPIC) {
-                    session = ((TopicConnection)con).createTopicSession(transacted, ack);
+                    session = ((TopicConnection) con).createTopicSession(transacted, ack);
                 } else {
                     session = con.createSession(transacted, ack);
                 }
                 if (trace) {
-                    log.trace("Using a non-XA Connection.  " +
-                            "It will not be able to participate in a Global UOW");
+                    log.trace("Using a non-XA Connection.  "
+                            + "It will not be able to participate in a Global UOW");
                 }
             }
 
@@ -717,16 +745,16 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
     }
 
     /**
-     * Create a connection from the given factory.  An XA connection will
-     * be created if possible.
+     * Create a connection from the given factory. An XA connection will be
+     * created if possible.
      *
-     * @param factory  An object that implements ConnectionFactory,
-     *                 XAQConnectionFactory
+     * @param factory An object that implements ConnectionFactory,
+     * XAQConnectionFactory
      * @param username The username to use or null for no user.
      * @param password The password for the given username or null if no
-     *                 username was specified.
+     * username was specified.
      * @return A connection.
-     * @throws JMSException             Failed to create connection.
+     * @throws JMSException Failed to create connection.
      * @throws IllegalArgumentException Factory is null or invalid.
      */
     public Connection createConnection(final Object factory, final String username, final String password)
@@ -745,17 +773,17 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
 
             if (username != null) {
                 if (mcf.getProperties().getType() == JmsConnectionFactory.QUEUE) {
-                    connection = ((XAQueueConnectionFactory)qFactory).createXAQueueConnection(username, password);
+                    connection = ((XAQueueConnectionFactory) qFactory).createXAQueueConnection(username, password);
                 } else if (mcf.getProperties().getType() == JmsConnectionFactory.TOPIC) {
-                    connection = ((XATopicConnectionFactory)qFactory).createXATopicConnection(username, password);
+                    connection = ((XATopicConnectionFactory) qFactory).createXATopicConnection(username, password);
                 } else {
                     connection = qFactory.createXAConnection(username, password);
                 }
             } else {
                 if (mcf.getProperties().getType() == JmsConnectionFactory.QUEUE) {
-                    connection = ((XAQueueConnectionFactory)qFactory).createXAQueueConnection();
+                    connection = ((XAQueueConnectionFactory) qFactory).createXAQueueConnection();
                 } else if (mcf.getProperties().getType() == JmsConnectionFactory.TOPIC) {
-                    connection = ((XATopicConnectionFactory)qFactory).createXATopicConnection();
+                    connection = ((XATopicConnectionFactory) qFactory).createXATopicConnection();
                 } else {
                     connection = qFactory.createXAConnection();
                 }
@@ -766,20 +794,20 @@ public class JmsManagedConnection implements ManagedConnection, ExceptionListene
             ConnectionFactory qFactory = (ConnectionFactory) factory;
             if (username != null) {
                 if (mcf.getProperties().getType() == JmsConnectionFactory.QUEUE) {
-                    connection = ((QueueConnectionFactory)qFactory).createQueueConnection(username, password);
+                    connection = ((QueueConnectionFactory) qFactory).createQueueConnection(username, password);
                 } else if (mcf.getProperties().getType() == JmsConnectionFactory.TOPIC) {
-                    connection = ((TopicConnectionFactory)qFactory).createTopicConnection(username, password);
+                    connection = ((TopicConnectionFactory) qFactory).createTopicConnection(username, password);
                 } else {
                     connection = qFactory.createConnection(username, password);
                 }
             } else {
-               if (mcf.getProperties().getType() == JmsConnectionFactory.QUEUE) {
-                   connection = ((QueueConnectionFactory)qFactory).createQueueConnection();
-               } else if (mcf.getProperties().getType() == JmsConnectionFactory.TOPIC) {
-                   connection = ((TopicConnectionFactory)qFactory).createTopicConnection();
-               } else {
-                   connection = qFactory.createConnection();
-               }
+                if (mcf.getProperties().getType() == JmsConnectionFactory.QUEUE) {
+                    connection = ((QueueConnectionFactory) qFactory).createQueueConnection();
+                } else if (mcf.getProperties().getType() == JmsConnectionFactory.TOPIC) {
+                    connection = ((TopicConnectionFactory) qFactory).createTopicConnection();
+                } else {
+                    connection = qFactory.createConnection();
+                }
             }
 
             log.debug("created " + mcf.getProperties().getSessionDefaultType() + " connection: " + connection);
