@@ -39,6 +39,7 @@ import org.jboss.logging.Logger;
  * @author <a href="adrian@jboss.com">Adrian Brock</a>
  */
 public class JmsServerSessionPool implements ServerSessionPool {
+
     /**
      * The logger
      */
@@ -68,7 +69,6 @@ public class JmsServerSessionPool implements ServerSessionPool {
      * The number of sessions
      */
     int sessionCount = 0;
-
 
     /**
      * Create a new session pool
@@ -165,9 +165,9 @@ public class JmsServerSessionPool implements ServerSessionPool {
      * @throws Exception for any error
      */
     @SuppressWarnings("unchecked")
-	protected void setupSessions() throws Exception {
+    protected void setupSessions() throws Exception {
         JmsActivationSpec spec = activation.getActivationSpec();
-        
+
         // Create the sessions
         List<JmsServerSession> clonedSessions;
         synchronized (serverSessions) {
@@ -208,9 +208,10 @@ public class JmsServerSessionPool implements ServerSessionPool {
                 int attempts = 0;
                 int forceClearAttempts = activation.getActivationSpec().getForceClearAttempts();
                 long forceClearInterval = activation.getActivationSpec().getForceClearOnShutdownInterval();
-                
-                if (log.isTraceEnabled())
+
+                if (log.isTraceEnabled()) {
                     log.trace(this + " force clear behavior in effect. Waiting for " + forceClearInterval + " milliseconds for " + forceClearAttempts + " attempts.");
+                }
 
                 while ((sessionCount > 0) && (attempts < forceClearAttempts)) {
                     try {
@@ -219,8 +220,9 @@ public class JmsServerSessionPool implements ServerSessionPool {
                         // Number of session didn't change
                         if (sessionCount == currentSessions) {
                             ++attempts;
-                            if (log.isTraceEnabled())
+                            if (log.isTraceEnabled()) {
                                 log.trace(this + " clear attempt failed " + attempts);
+                            }
                         }
                     } catch (InterruptedException ignore) {
                     }
@@ -259,8 +261,9 @@ public class JmsServerSessionPool implements ServerSessionPool {
             Queue queue = (Queue) activation.getDestination();
             consumer = connection.createConnectionConsumer(queue, selector, this, maxMessages);
         }
-        if (log.isDebugEnabled())
+        if (log.isDebugEnabled()) {
             log.debug("Created consumer " + consumer);
+        }
 
         if (consumer == null) {
             throw new JMSException("Consumer is null");
@@ -273,8 +276,9 @@ public class JmsServerSessionPool implements ServerSessionPool {
     protected void teardownConsumer() {
         try {
             if (consumer != null) {
-                if (log.isDebugEnabled())
+                if (log.isDebugEnabled()) {
                     log.debug("Closing the " + consumer);
+                }
                 consumer.close();
             }
         } catch (Throwable t) {

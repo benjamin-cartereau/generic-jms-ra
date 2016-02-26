@@ -34,10 +34,12 @@ import org.jboss.resource.adapter.jms.util.Strings;
  * @author <a href="mailto:adrian@jboss.com">Adrian Brock</a>
  */
 public class JmsMCFProperties implements java.io.Serializable {
-    static final long serialVersionUID = -7997396849692340121L;
+
+    static final long serialVersionUID = -7997396849692340122L;
 
     public static final String QUEUE_TYPE = Queue.class.getName();
     public static final String TOPIC_TYPE = Topic.class.getName();
+    private static final String AGNOSTIC_TYPE = "agnostic";
 
     String userName;
     String password;
@@ -54,6 +56,8 @@ public class JmsMCFProperties implements java.io.Serializable {
 
     /**
      * Set userName, null by default.
+     *
+     * @param userName user name
      */
     public void setUserName(final String userName) {
         this.userName = userName;
@@ -89,6 +93,8 @@ public class JmsMCFProperties implements java.io.Serializable {
 
     /**
      * Set client id, null by default.
+     *
+     * @param clientID id of the client
      */
     public void setClientID(final String clientID) {
         this.clientID = clientID;
@@ -103,6 +109,8 @@ public class JmsMCFProperties implements java.io.Serializable {
 
     /**
      * Set the default session type.
+     *
+     * @param type of the session
      */
     public void setType(int type) {
         this.type = type;
@@ -117,21 +125,21 @@ public class JmsMCFProperties implements java.io.Serializable {
     }
 
     public String getQueueConnectionFactory() {
-		return queueConnectionFactory;
-	}
+        return queueConnectionFactory;
+    }
 
-	public void setQueueConnectionFactory(String queueConnectionFactory) {
-		this.queueConnectionFactory = queueConnectionFactory;
-	}
+    public void setQueueConnectionFactory(String queueConnectionFactory) {
+        this.queueConnectionFactory = queueConnectionFactory;
+    }
 
-	public String getTopicConnectionFactory() {
-		return topicConnectionFactory;
-	}
+    public String getTopicConnectionFactory() {
+        return topicConnectionFactory;
+    }
 
-	public void setTopicConnectionFactory(String topicConnectionFactory) {
-		this.topicConnectionFactory = topicConnectionFactory;
-	}
-	
+    public void setTopicConnectionFactory(String topicConnectionFactory) {
+        this.topicConnectionFactory = topicConnectionFactory;
+    }
+
     public String getJndiParameters() {
         return jndiParameters;
     }
@@ -147,21 +155,23 @@ public class JmsMCFProperties implements java.io.Serializable {
      * @throws ResourceException if type was not a valid type.
      */
     public void setSessionDefaultType(String type) throws ResourceException {
-        if (type.equals(QUEUE_TYPE))
+        if (type.equals(QUEUE_TYPE)) {
             this.type = JmsConnectionFactory.QUEUE;
-        else if (type.equals(TOPIC_TYPE))
+        } else if (type.equals(TOPIC_TYPE)) {
             this.type = JmsConnectionFactory.TOPIC;
-        else
+        } else {
             this.type = JmsConnectionFactory.AGNOSTIC;
+        }
     }
 
     public String getSessionDefaultType() {
-        if (type == JmsConnectionFactory.AGNOSTIC)
-            return "agnostic";
-        else if (type == JmsConnectionFactory.QUEUE)
+        if (type == JmsConnectionFactory.AGNOSTIC) {
+            return AGNOSTIC_TYPE;
+        } else if (type == JmsConnectionFactory.QUEUE) {
             return TOPIC_TYPE;
-        else
+        } else {
             return QUEUE_TYPE;
+        }
     }
 
     /**
@@ -169,25 +179,26 @@ public class JmsMCFProperties implements java.io.Serializable {
      */
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) return false;
+        if (obj == null) {
+            return false;
+        }
 
         if (obj instanceof JmsMCFProperties) {
             JmsMCFProperties you = (JmsMCFProperties) obj;
-            return (Strings.compare(userName, you.getUserName()) &&
-                    Strings.compare(password, you.getPassword()) &&
-                    this.type == you.type);
+            return (Strings.compare(userName, you.getUserName())
+                    && Strings.compare(password, you.getPassword())
+                    && this.type == you.type);
         }
 
         return false;
     }
 
-    /**
-     * Simple hashCode of all attributes.
-     */
     @Override
     public int hashCode() {
-        // FIXME
-        String result = "" + userName + password + type;
-        return result.hashCode();
+        int hash = 5;
+        hash = 97 * hash + (this.userName != null ? this.userName.hashCode() : 0);
+        hash = 97 * hash + (this.password != null ? this.password.hashCode() : 0);
+        hash = 97 * hash + this.type;
+        return hash;
     }
 }
